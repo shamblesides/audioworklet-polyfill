@@ -60,9 +60,19 @@ if (typeof AudioWorkletNode !== 'function' || !("audioWorklet" in AudioContext.p
     }
 
     addModule (url, options) {
-      return fetch(url).then(r => {
-        if (!r.ok) throw Error(r.status);
-        return r.text();
+      return new Promise(function (resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        xhr.onload = function() {
+          resolve(xhr.responseText)
+        }
+        xhr.onerror = function() {
+          reject(new Error('AudioWorklet shim: failed to load script. status code ' + xhr.status));
+        }
+        xhr.onabort = function() {
+          reject(new Error('AudioWorklet shim: failed to load script. network error'));
+        }
+        xhr.open('GET', url)
+        xhr.send();
       }).then(code => {
         const context = {
           sampleRate: this.$$context.sampleRate,
